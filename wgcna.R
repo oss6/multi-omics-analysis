@@ -162,16 +162,6 @@ correlate_eigengenes_with_responses <- function(wgcna_result) {
   dev.off()
 }
 
-
-# Gene-response significance and module membership
-# ------------------------------------------------
-
-# We quantify associations of individual genes with our trait of interest (weight)
-# by defining Gene Significance GS as (the absolute value of) the correlation between the gene and the trait.
-# For each module, we also define a quantitative measure of module membership MM
-# as the correlation of the module eigengene and the gene expression profile.
-# This allows us to quantify the similarity of all genes on the array to every module.
-
 get_module_membership <- function (wgcna_result) {
   data <- wgcna_result$ds$data.matrix
   n_samples <- nrow(data)
@@ -322,11 +312,6 @@ get_interesting_modules_results <- function (wgcna_result) {
   
   return(interesting_modules_results)
 }
-
-# Partition genes based on interesting modules
-# --------------------------------------------
-
-# genes_partitioned_by_modules <- lapply(interesting_modules, function (x) { colnames(data)[moduleColors == x] })
 
 # Export to cytoscape
 # -------------------

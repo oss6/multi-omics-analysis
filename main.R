@@ -62,14 +62,16 @@ compounds_characterising_site <- list()
 compounds_characterising_ref <- list()
 
 # DESeq2
-# ------
+# ------------------------------------------------------------------------------
 
 degs_result <- get_degs()
 
 genes_characterising_ref[['degs']] <- degs_result$degs$gene
 
-# goplot(degs_result$degs_annotated)
-# dotplot(degs_result$degs_annotated)
+# ------------------------------------------------------------------------------
+
+
+
 
 # SGCCA
 # ------------------------------------------------------------------------------
@@ -304,8 +306,6 @@ ggsave(
 
 # Gene comparison between Site and REF
 
-source('./genes_annotation.R')
-
 genes_list <- list(site = site_consensus_genes, ref = ref_consensus_genes)
 ck <- clusters_comparison(genes_list, kegg = FALSE, ont = 'BP')
 ck <- pairwise_termsim(ck)
@@ -369,12 +369,14 @@ plot_compounds(ref_consensus_compounds_annotated, './results/compounds_ref.png')
 save_compounds_table(ref_consensus_compounds_annotated, './results/compounds_ref.csv')
 
 
+
 # Water chemicals analysis
 # ------------------------------------------------------------------------------
 
+# PCA
+# ---
+
 water_chemicals <- read.table('./data/water_chemicals.tsv', header = T, sep = '\t', row.names = 1, check.names = F)
-# water_chemicals <- as.data.frame(water_chemicals[,-c(1)])
-# water_chemicals_meta <- data.frame(name = rownames(water_chemicals), cas = water_chemicals$CAS)
 water_chemicals <- as.data.frame(t(water_chemicals[, -1]))
 water_chemicals <- water_chemicals %>% select_if(colSums(.) != 0)
 water_chemicals <- scale(water_chemicals)
@@ -391,8 +393,7 @@ fviz_pca_var(water_chemicals_pca, col.var = "cos2",
 
 
 # MFA
-# ----------------------------------
-
+# ---
 
 water_chemicals <- read.table('./data/water_chemicals.tsv', header = T, sep = '\t', row.names = 1, check.names = F)
 water_chemicals <- as.data.frame(t(water_chemicals[, -1]))
@@ -424,7 +425,6 @@ data_m <- as.data.frame(data_m$data.matrix) %>% rownames_to_column(var = "sample
   dplyr::filter(!grepl("C", sample) & !grepl("B", sample)) %>%
   dplyr::select(-sample) %>%
   dplyr::select(any_of(interesting_modules$greenyellow$interesting_genes_site$gene))
-  # dplyr::select(any_of(degs_result$degs$gene))
 
 data_m <- as.data.frame(apply(data_m, 2, function(x) colMeans(matrix(x, nrow =  6))))
 
@@ -459,27 +459,21 @@ data_psl <- lapply(get_partitioned_peaks(), function (x) {
 data_ps <- do.call(cbind, data_psl)
 # --------
 
-
-# sites <- rep(1:12, each = 6)
-# sites_names <- unlist(lapply(seq_along(sites), function (i) {
-#   x <- paste('D', formatC(sites[i], width = 2, flag = "0"), sep = '')
-#   x <- paste(x, ((i - 1) %% 6) + 1, sep = '.')
-#   return(x)
-# }))
-
 sites_names <- unlist(lapply(1:12, function (i) {
   paste('D', formatC(i, width = 2, flag = "0"), sep = '')
 }))
 
 rownames(data_m) <- sites_names
 rownames(data_ms) <- sites_names
-
 rownames(data_p) <- sites_names
 rownames(data_ps) <- sites_names
-
-# water_chemicals <- as.data.frame(water_chemicals) %>% dplyr::slice(rep(1:n(), each = 6))
 rownames(water_chemicals) <- sites_names
 
+# choose which groups you'd like:
+# - data_p - one compounds group
+# - data_ps - multiple compounds groups
+# - data_m - one gene expr. group
+# - data_ms - multiple gene expr. groups
 wd_m <- cbind(data_ps, data_m, wcs)
 
 groups_lengths <- c(unlist(lapply(data_psl, ncol)), ncol(data_m), unlist(lapply(wc_ls, ncol)))
@@ -501,21 +495,3 @@ fviz_mfa_ind(res.mfa, col.ind = "cos2",
              repel = TRUE)
 fviz_mfa_ind(res.mfa, partial = c('D11', 'D12', 'D04'))
 fviz_mfa_axes(res.mfa)
-
-
-
-
-# ------------------
-
-
-wp_cor <- cor(data_m, water_chemicals)
-wp_pca <- princomp(wp_cor)
-
-fviz_eig(wp_pca, addlabels = TRUE)
-
-fviz_pca_var(wp_pca, col.var = "cos2",
-             gradient.cols = c("red", "gray", "blue"),
-             repel = TRUE)
-
-
-

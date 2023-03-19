@@ -28,20 +28,13 @@ run_rgcca <- function(genes, response, use_specific_peaks, results_subdir = '') 
   rownames(ref) <- row.names(rna.ds$meta.data)
   colnames(ref) <- c('ref')
   
-  # wc1 <- rep(t(water_chemicals[1,]), each = 6)
-  # wc1 <- data.matrix(c(wc1, wc1))
-  # rownames(wc1) <- row.names(rna.ds$meta.data)
-  # colnames(wc1) <- c('wc1')
-  
   responses <- list(
     site = site,
-    ref = ref,
-    wc1 = wc1
+    ref = ref
   )
   response_map <- list(
     site = 'Site',
-    ref = 'REF',
-    wc1 = 'wc1'
+    ref = 'REF'
   )
   
   shared.ids <- intersect(row.names(rna.ds$data.matrix), row.names(ppolar.ds$data.matrix))
@@ -76,17 +69,6 @@ run_rgcca <- function(genes, response, use_specific_peaks, results_subdir = '') 
     peak_blocks,
     response_block
   )
-  
-  # cca_perm_res <- rgcca_permutation(
-  #   blocks = A,
-  #   connection = C,
-  #   superblock = FALSE,
-  #   response = length(A),
-  #   par_type = 'sparsity',
-  #   scheme = 'factorial',
-  #   method = 'sgcca',
-  #   n_cores = 6
-  # )
   
   ncomp <- c(rep(4, length(blocks) - 1), 1)
   
@@ -139,8 +121,7 @@ run_rgcca <- function(genes, response, use_specific_peaks, results_subdir = '') 
       dev.off()
     }
   }
-  
-  # stability_selection <- rgcca_stability(degs_with_metabolites_cca)
+
   boot_res <- rgcca_bootstrap(cca.res, n_cores = 6, verbose = FALSE)
   
   return(list(
@@ -148,4 +129,3 @@ run_rgcca <- function(genes, response, use_specific_peaks, results_subdir = '') 
     boot_res=boot_res
   ))
 }
-

@@ -33,37 +33,6 @@ get_important_features.irf <- function (data_file, response, ref_level, mask = N
   train.id <- sample(1:n, size = 8 * round(n / 10))
   test.id <- setdiff(1:n, train.id)
   
-  # fit iRF without iterations
-  # sel.prob <- rep(1/p, p)
-  # 
-  # fit <- iRF(x = X[train.id,], 
-  #            y = Y[train.id], 
-  #            xtest = X[test.id,], 
-  #            ytest = Y[test.id],
-  #            n.iter = 5, 
-  #            iter.return = 1:5,
-  #            n.core = 4
-  # )
-  
-  # plot ROC/AUC
-  # rf <- fit$rf.list
-  
-  # plot(0:1, 0:1, type = 'l', lty = 2, xlab = 'FPR', ylab = 'TPR', main = 'ROC Curve')
-  # for (iter in 1:5){
-  #   cat(paste('iter = ', iter, ':: '))
-  #   roc.info <- roc(rf[[iter]]$test$votes[,2], Y[test.id])
-  #   lines(roc.info$fpr, roc.info$tpr, type = 'l', col = iter, lwd = 2)
-  #   cat(paste('AUROC: ', round(100*auc(roc.info), 2), '%\n', sep = ''))
-  # }
-  # legend('bottomright', legend=paste('iter:', 1:iter), col=1:iter, lwd=2, bty='n')
-  
-  
-  # plot feature weights
-  # par(mfrow = c(1,5))
-  # for (iter in 1:5){
-  #   varImpPlot(rf[[iter]], n.var = 10, main = paste('Variable Importance (iter:', iter, ')')) 
-  # }
-  
   # fit iRF with iterations
   fit <- iRF(
     x = X[train.id,],
@@ -81,11 +50,6 @@ get_important_features.irf <- function (data_file, response, ref_level, mask = N
   significant_features <- features_importance %>%
     arrange(desc(MeanDecreaseGini)) %>%
     filter(MeanDecreaseGini != 0)
-  
-  # rforest <- readForest(fit$rf.list, x=X[train.id,])
-  # p <- plotInt(x=X[test.id,], y=Y[test.id], int='158_9226476+_570_2809075+', 
-  #              read.forest=rforest,
-  #              xlab='X1', ylab='X2')
   
   return(list(
     significant_features = significant_features,
@@ -105,5 +69,3 @@ plot_stability_scores <- function (irf_fit, filename) {
   )
   dev.off()
 }
-
-

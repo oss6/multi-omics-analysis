@@ -1,27 +1,6 @@
-# Module 5 Data Jamboree
+# Multi-omics data analysis
 
-See this for experiment information: https://canvas.bham.ac.uk/courses/63793/pages/data-jamboree-kick-off?module_item_id=2639677.
+> This repository is for educational purposes.
 
-General notes:
-
-- Partial dependence plots
-- Pathway analysis and divide genes into different blocks according to function, likewise for metabolites.
-- Or use gene co-expression networks to group genes and obtain blocks for analysis.
-- Think about pos v neg datasets
-- RGCCA: dimensionality reduction between the two datasets
-- iRF: model to predict REF/site?
-- WGCNA to find modules related to ...
-
-# Results
-
-## SGCCA
-
-### Full blocks without superblock
-
-### Full blocks with superblock
-
-- Blocks: full matrices
-- Superblock: true
-- Scheme: factorial
-- Permutation
-- Sparsity: 0.1175763 (rna), ppolar (0.1359079), superblock (1)
+Run the main script for the overall analysis or use the individual
+functions from the different modules on your own data.
