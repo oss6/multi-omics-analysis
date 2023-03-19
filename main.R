@@ -24,7 +24,6 @@ library(enrichplot)
 library(ggcorrplot)
 library(FactoMineR)
 library(factoextra)
-library(RColorBrewer)
 
 if (!dir.exists('./rdata')) {
   dir.create('./rdata')
