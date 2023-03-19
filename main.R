@@ -24,6 +24,7 @@ library(enrichplot)
 library(ggcorrplot)
 library(FactoMineR)
 library(factoextra)
+library(RColorBrewer)
 
 if (!dir.exists('./rdata')) {
   dir.create('./rdata')
@@ -71,7 +72,7 @@ genes_characterising_ref[['degs']] <- degs_result$degs$gene
 # goplot(degs_result$degs_annotated)
 # dotplot(degs_result$degs_annotated)
 
-# R/SGCCA
+# SGCCA
 # ------------------------------------------------------------------------------
 
 # REF
@@ -110,7 +111,7 @@ p <- dotplot(sgcca_genes_ref, title = 'BP characterising REF')
 ggsave(filename = './results/rgcca/genes_ref_bp_dotplot.png', plot = p, width = 6, height = 10)
 
 sgcca_compounds_ref <- annotate_compounds(fella_data, compounds_characterising_ref$sgcca)
-plot_compounds(sgcca_compounds_ref, './results/rgcca/significant_compounds_graph_ref.png')
+plot_compounds(sgcca_compounds_ref, './results/rgcca/significant_compounds_graph_ref.svg')
 save_compounds_table(sgcca_compounds_ref, './results/rgcca/significant_compounds_table_ref.csv')
 
 
@@ -297,7 +298,7 @@ ggsave(
   height = 10)
 
 ggsave(
-  filename = './results/genes_site_mf_dotplot.png',
+  filename = './results/genes_ref_mf_dotplot.png',
   plot = dotplot(ref_consensus_genes_annotation_mf, title = 'MF characterising REF'),
   width = 6,
   height = 10)
@@ -306,24 +307,49 @@ ggsave(
 
 source('./genes_annotation.R')
 
-genes_list <- list(site = genes_characterising_site$sgcca, ref = genes_characterising_ref$sgcca)
-ck <- clusters_comparison(genes_list, kegg = FALSE)
+genes_list <- list(site = site_consensus_genes, ref = ref_consensus_genes)
+ck <- clusters_comparison(genes_list, kegg = FALSE, ont = 'BP')
 ck <- pairwise_termsim(ck)
-svg(filename = './results/sgcca_site_vs_ref_emapplot.svg')
+svg(filename = './results/site_vs_ref_bp_emapplot.svg', width = 10, height = 10)
+emapplot(ck)
+dev.off()
+
+genes_list <- list(site = site_consensus_genes, ref = ref_consensus_genes)
+ck <- clusters_comparison(genes_list, kegg = FALSE, ont = 'MF')
+ck <- pairwise_termsim(ck)
+svg(filename = './results/site_vs_ref_mf_emapplot.svg', width = 10, height = 10)
 emapplot(ck)
 dev.off()
 
 ck <- clusters_comparison(genes_list, kegg = TRUE)
 ck <- pairwise_termsim(ck)
-svg(filename = './results/sgcca_site_vs_ref_kegg_emapplot.svg')
+svg(filename = './results/site_vs_ref_kegg_emapplot.svg', width = 10, height = 10)
 emapplot(ck)
 dev.off()
 
 # Gene comparison between methods
 
-ck <- clusters_comparison(genes_characterising_site, kegg = FALSE)
+ck <- clusters_comparison(genes_characterising_site, kegg = FALSE, ont = 'BP')
 ck <- pairwise_termsim(ck)
-svg(filename = './results/site_methods_emapplot.svg', width = 15, height = 15)
+svg(filename = './results/site_methods_bp_emapplot.svg', width = 15, height = 15)
+emapplot(ck)
+dev.off()
+
+ck <- clusters_comparison(genes_characterising_site, kegg = FALSE, ont = 'MF')
+ck <- pairwise_termsim(ck)
+svg(filename = './results/site_methods_mf_emapplot.svg', width = 15, height = 15)
+emapplot(ck)
+dev.off()
+
+ck <- clusters_comparison(genes_characterising_ref, kegg = FALSE, ont = 'BP')
+ck <- pairwise_termsim(ck)
+svg(filename = './results/ref_methods_bp_emapplot.svg', width = 15, height = 15)
+emapplot(ck)
+dev.off()
+
+ck <- clusters_comparison(genes_characterising_ref, kegg = FALSE, ont = 'MF')
+ck <- pairwise_termsim(ck)
+svg(filename = './results/ref_methods_mf_emapplot.svg', width = 15, height = 15)
 emapplot(ck)
 dev.off()
 
@@ -348,7 +374,7 @@ save_compounds_table(ref_consensus_compounds_annotated, './results/compounds_ref
 # ------------------------------------------------------------------------------
 
 water_chemicals <- read.table('./data/water_chemicals.tsv', header = T, sep = '\t', row.names = 1, check.names = F)
-water_chemicals <- as.data.frame(water_chemicals[,-c(1)])
+# water_chemicals <- as.data.frame(water_chemicals[,-c(1)])
 # water_chemicals_meta <- data.frame(name = rownames(water_chemicals), cas = water_chemicals$CAS)
 water_chemicals <- as.data.frame(t(water_chemicals[, -1]))
 water_chemicals <- water_chemicals %>% select_if(colSums(.) != 0)
@@ -359,90 +385,138 @@ water_chemicals_pca <- princomp(water_chemicals_corr)
 
 fviz_eig(water_chemicals_pca, addlabels = TRUE)
 
-# fviz_pca_var(water_chemicals_pca, col.var = "black")
-# 
-# fviz_cos2(water_chemicals_pca, choice = "var", axes = 1:2)
-
 fviz_pca_var(water_chemicals_pca, col.var = "cos2",
              gradient.cols = c("red", "gray", "blue"),
              repel = TRUE)
 
 
 
-# ---------------------
+# MFA
+# ----------------------------------
 
 
-sites <- unlist(lapply(rep(1:12, each = 6), function (x) { paste('D', formatC(x, width = 2, flag = "0"), sep = '') }))
+water_chemicals <- read.table('./data/water_chemicals.tsv', header = T, sep = '\t', row.names = 1, check.names = F)
+water_chemicals <- as.data.frame(t(water_chemicals[, -1]))
+water_chemicals <- water_chemicals %>% select_if(colSums(.) != 0)
 
-g <- as.data.frame(rna.ds$data.matrix) %>% select(any_of(site_consensus_genes))
-g <- g[-seq(1, 6),]
-g$Sample <- rownames(g)
-g$Site <- c(sites, sites)
+# Grouping from ChatGPT
+chemicals <- list(
+  "Carbamates" = c("Carbaryl", "Carbendazim", "Mecoprop"),
+  "Triazines" = c("Atrazine", "Chlorotoluron", "Simazine", "Terbuthylazine", "Terbuthylazine-2-hydroxy", "Prometryn"),
+  "Pharmaceuticals" = c("Cetirizine", "Clarithromycin", "Enalapril", "Erythromycin", "Lidocaine", "Metformin", "Metoprolol", "Oxazepam", "Tramadol"),
+  "Phenols" = c("Chlorophene", "Bisphenol S"),
+  "Benzotriazoles" = c("1H-Benzotriazole", "5-methyl-1H-benzotriazole"),
+  "Antibiotics" = c("Diclofenac", "Genistein", "Phenazone", "Sulfamethazine", "Sulfamethoxazole", "Sulfapyridine", "Trimethoprim"),
+  "Herbicides" = c("2,4-Dichlorphenoxyacetic acid", "Chloridazon", "Lenacil", "MCPA", "Metolachlor", "Metolachlor ESA", "Isoproturon"),
+  "Miscellaneous" = c("10,11-Dihydro-10-hydroxycarbamazepine", "10,11-Dihydro-10,11-dihydroxy-carbamazepine", "2-(2-(Chlorophenyl)amino)benzaldehyde", "2-(Methylthio)benzothiazole", "2-Benzothiazolesulfonic acid", "2-Hydroxycarbamazepine", "2-Naphthalenesulfonic acid", "4-Formyl-antipyrine", "Acesulfame", "Acetyl-Sulfamethoxazole", "Bentazone", "Benzophenone-4", "Caffeine", "Cyclamate", "Daidzein", "DEET", "Denatonium", "Desethylatrazine", "Diazinon", "Dimethylaminophenazone", "Diphenylphosphate", "Diuron", "Gestoden", "Hexa(methoxymethyl)melamine", "N-Acetyl-4-aminoantipyrine", "N-Formyl-4-aminoantipyrine", "p-Toluenesulfonamide", "Sucralose", "Tetraglyme", "Triglyme", "Triphenylphosphine oxide")
+)
 
-chem_df <- read.table('./data/water_chemicals.tsv', header = T, sep = '\t', row.names = 1, check.names = F)
-chem_df <- chem_df[,-1]
+wc_ls <- lapply(chemicals, function (x) {
+  water_chemicals %>% dplyr::select(any_of(x))
+})
 
-# Convert the chemicals matrix to long format
-melt_chem_df <- melt(chem_df, value.name = "Concentration") %>% rename(Chemical = ChemName, Site = variable)
+wcs <- do.call(cbind, wc_ls)
+# --------
+data_m <- load.dataset(
+  meta.file = './data/sample_sheet.csv', meta.sep = ',',
+  data.file = './data/rna_norm_counts.csv', data.sep = ','
+)
+data_m <- as.data.frame(data_m$data.matrix) %>% rownames_to_column(var = "sample") %>%
+  dplyr::filter(!grepl("C", sample) & !grepl("B", sample)) %>%
+  dplyr::select(-sample) %>%
+  dplyr::select(any_of(interesting_modules$greenyellow$interesting_genes_site$gene))
+  # dplyr::select(any_of(degs_result$degs$gene))
 
-# Merge the normalized gene expression data with the long format chemicals matrix
-merged_df <- merge(g, melt_chem_df, by = 'Site')
+data_m <- as.data.frame(apply(data_m, 2, function(x) colMeans(matrix(x, nrow =  6))))
 
-# Create a design matrix for the linear model
-#design_matrix <- model.matrix(~ 0 + site + factor(Sample_ID))
+data_msl <- list()
 
-design_matrix <- model.matrix(~ Chemical + Site, merged_df)
+for (i in seq_along(interesting_modules)) {
+  module_name <- names(interesting_modules)[i]
+  mod <- interesting_modules[[i]]
 
-merged_df <- merged_df %>% select(-one_of(c('Chemical', 'Site', 'Sample')))
-merged_df$Site <- factor(merged_df$Site)
-merged_df$Chemical <- factor(merged_df$Chemical)
+  data_msl[[module_name]] <- data_m %>% dplyr::select(any_of(mod$interesting_genes_site$gene))
+}
 
-# Fit the linear model
-fit <- lmFit(merged_df %>% select(-one_of(c('Chemical', 'Site', 'Sample'))), design_matrix)
+data_ms <- do.call(cbind, data_msl)
+# --------
 
-# Apply empirical Bayes smoothing to the model
-fit <- eBayes(fit)
+# --------
+data_p <- load.dataset(
+  meta.file = './data/sample_sheet.csv', meta.sep = ',',
+  data.file = './data/polar_pos_pqn_imputed_glog.csv', data.sep = ','
+)
 
-# Identify differentially expressed genes
-results <- topTable(fit, coef = "concentration", number = Inf, adjust.method = "BH", sort.by = "B", p.value = 0.05)
+data_p <- as.data.frame(data_p$data.matrix) %>% rownames_to_column(var = "sample") %>%
+  dplyr::filter(!grepl("C", sample) & !grepl("B", sample)) %>%
+  dplyr::select(-sample)
+
+data_p <- apply(data_p, 2, function(x) colMeans(matrix(x, nrow =  6)))
+
+data_psl <- lapply(get_partitioned_peaks(), function (x) {
+  data_p[, colnames(data_p) %in% x]
+})
+
+data_ps <- do.call(cbind, data_psl)
+# --------
+
+
+# sites <- rep(1:12, each = 6)
+# sites_names <- unlist(lapply(seq_along(sites), function (i) {
+#   x <- paste('D', formatC(sites[i], width = 2, flag = "0"), sep = '')
+#   x <- paste(x, ((i - 1) %% 6) + 1, sep = '.')
+#   return(x)
+# }))
+
+sites_names <- unlist(lapply(1:12, function (i) {
+  paste('D', formatC(i, width = 2, flag = "0"), sep = '')
+}))
+
+rownames(data_m) <- sites_names
+rownames(data_ms) <- sites_names
+
+rownames(data_p) <- sites_names
+rownames(data_ps) <- sites_names
+
+# water_chemicals <- as.data.frame(water_chemicals) %>% dplyr::slice(rep(1:n(), each = 6))
+rownames(water_chemicals) <- sites_names
+
+wd_m <- cbind(data_ps, data_m, wcs)
+
+groups_lengths <- c(unlist(lapply(data_psl, ncol)), ncol(data_m), unlist(lapply(wc_ls, ncol)))
+groups_names <- c(names(data_psl), 'genes', names(wc_ls))
+
+res.mfa <- MFA(wd_m, 
+               group = groups_lengths,
+               type = rep('s', length(groups_lengths)),
+               name.group = groups_names,
+               graph = FALSE)
+
+fviz_screeplot(res.mfa)
+fviz_mfa_var(res.mfa, "group")
+fviz_contrib(res.mfa, "group", axes = 2)
+fviz_contrib(res.mfa, choice = "quanti.var", axes = 2, top = 20, palette = "jco")
+
+fviz_mfa_ind(res.mfa, col.ind = "cos2", 
+             gradient.cols = c("#00AFBB", "#E7B800", "#FC4E07"),
+             repel = TRUE)
+fviz_mfa_ind(res.mfa, partial = c('D11', 'D12', 'D04'))
+fviz_mfa_axes(res.mfa)
 
 
 
-# # Read in the three datasets
-# water_chem <- read.csv("water_chem_data.csv")
-# gene_expression <- read.csv("gene_expression_data.csv")
-# metabolite_data <- read.csv("metabolite_data.csv")
-# 
-# # Reshape the water chemicals matrix into a long format
-# library(reshape2)
-# water_chem_long <- reshape2::melt(water_chemicals, id.vars = "Site", variable.name = "Chemical", value.name = "Concentration") %>% rename(Site = Var1, Chemical = Var2)
-# 
-# # Normalize the concentration values
-# # reference_ion <- "Na+"  # choose a commonly found ion as the reference
-# # water_chem_long$Concentration_norm <- water_chem_long$Concentration / water_chem_long[water_chem_long$Chemical == reference_ion, "Concentration"]
-# 
-# # Reshape the gene expression and metabolite matrices into a long format
-# sites <- unlist(lapply(rep(1:12, each = 6), function (x) { paste('D', formatC(x, width = 2, flag = "0"), sep = '') }))
-# rna.ds <- load.dataset(
-#   meta.file = './data/sample_sheet.csv', meta.sep = ',',
-#   data.file = './data/rna_norm_counts.csv', data.sep = ','
-# )
-# g <- as.data.frame(rna.ds$data.matrix) %>% select(any_of(genes_characterising_site$wgcna))
-# g <- g[-seq(1, 6),]
-# g$Sample <- rownames(g)
-# g$Site <- c(sites, sites)
-# gene_expression_long <- melt(g, id.vars = c("Sample", "Site"), variable.name = "Gene", value.name = "Expression")
-# metabolite_data_long <- melt(metabolite_data, id.vars = "Sample", variable.name = "Metabolite", value.name = "Intensity")
-# 
-# # Merge the three datasets by sample ID
-# library(dplyr)
-# merged_data <- inner_join(gene_expression_long, metabolite_data_long, by = "Sample")
-# merged_data <- inner_join(gene_expression_long, water_chem_long, by = "Site")
-# 
-# # Perform correlation analysis
-# gene_corr <- cor(merged_data$Expression, merged_data$Concentration, method = "pearson")
-# metabolite_corr <- cor(merged_data$Intensity, merged_data$Concentration_norm, method = "pearson")
-# 
-# # Visualize the results
-# plot(merged_data$Concentration_norm, merged_data$Expression, xlab = "Normalized Concentration", ylab = "Gene Expression")
-# plot(merged_data$Concentration_norm, merged_data$Intensity, xlab = "Normalized Concentration", ylab = "Metabolite Intensity")
+
+# ------------------
+
+
+wp_cor <- cor(data_m, water_chemicals)
+wp_pca <- princomp(wp_cor)
+
+fviz_eig(wp_pca, addlabels = TRUE)
+
+fviz_pca_var(wp_pca, col.var = "cos2",
+             gradient.cols = c("red", "gray", "blue"),
+             repel = TRUE)
+
+
+

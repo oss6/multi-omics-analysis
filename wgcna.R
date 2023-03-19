@@ -5,8 +5,6 @@ source('./fileio.R')
 source('./id_mapping.R')
 source('./genes_annotation.R')
 
-# wgcna_results <- list()
-
 run_wgcna <- function () {
   # allow multi-threading within WGCNA
   # skip this line if you run RStudio or other third-party R environments
@@ -135,7 +133,7 @@ significant_modules <- function (wgcna_result, response) {
     geom_boxplot(width = 0.2, outlier.shape = NA) +
     ggforce::geom_sina(maxwidth = 0.3) +
     theme_classic()
-  ggsave(filename = fname, plot = plt)
+  ggsave(filename = fname, plot = plt, width = 8, height = 10)
   
   return(stats_df)
 }

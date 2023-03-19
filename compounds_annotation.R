@@ -56,8 +56,8 @@ annotate_compounds <- function (fella_data, compounds, nlimit_g = 150, nlimit_t 
 }
 
 plot_compounds <- function (analysis, filename) {
-  png(filename = filename, width = 1920, height = 1200)
-  plotGraph(analysis$results_graph, vertex.label.cex = .9, width = 1920, height = 1200)
+  svg(filename = filename, width = 18, height = 18)
+  plotGraph(analysis$results_graph, vertex.label.cex = 1, width = 1920, height = 1200)
   dev.off()
 }
 

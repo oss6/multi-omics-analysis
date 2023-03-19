@@ -29,7 +29,7 @@ annotate_genes_kegg <- function (genes) {
   return(enrich_result)
 }
 
-clusters_comparison <- function (genes_list, kegg = TRUE) {
+clusters_comparison <- function (genes_list, kegg = TRUE, ont = 'BP') {
   gene_cluster <- lapply(genes_list, function (x) {
     ids <- create_map(
       './annotations/rna_dma_to_dme_mappings.tsv',
@@ -47,7 +47,7 @@ clusters_comparison <- function (genes_list, kegg = TRUE) {
   if (kegg) {
     ck <- compareCluster(geneCluster = gene_cluster, fun = enrichKEGG, organism = 'dme', keyType = 'ncbi-geneid')
   } else {
-    ck <- compareCluster(geneCluster = gene_cluster, fun = enrichGO, OrgDb = 'org.Dm.eg.db', keyType = 'ENTREZID')
+    ck <- compareCluster(geneCluster = gene_cluster, fun = enrichGO, OrgDb = 'org.Dm.eg.db', keyType = 'ENTREZID', ont = ont)
   }
   
   ck <- setReadable(ck, OrgDb = 'org.Dm.eg.db', keyType = 'ENTREZID')

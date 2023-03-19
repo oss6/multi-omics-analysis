@@ -6,6 +6,8 @@ source('./fileio.R')
 source('./id_mapping.R')
 
 get_important_features.irf <- function (data_file, response, ref_level, mask = NULL) {
+  # set.seed(47)
+  
   ds <- load.dataset(
     meta.file = './data/sample_sheet.csv', meta.sep = ',',
     data.file = data_file, data.sep = ','
@@ -62,16 +64,15 @@ get_important_features.irf <- function (data_file, response, ref_level, mask = N
   #   varImpPlot(rf[[iter]], n.var = 10, main = paste('Variable Importance (iter:', iter, ')')) 
   # }
   
-  
   # fit iRF with iterations
   fit <- iRF(
     x = X[train.id,],
     y = Y[train.id],
     xtest = X[test.id,], 
     ytest = Y[test.id],
-    n.iter = 10,
-    iter.return = 1:10,
-    n.bootstrap = 50,
+    n.iter = 15,
+    iter.return = 1:15,
+    n.bootstrap = 100,
     select.iter = T,
     n.core = 6
   )
@@ -80,6 +81,11 @@ get_important_features.irf <- function (data_file, response, ref_level, mask = N
   significant_features <- features_importance %>%
     arrange(desc(MeanDecreaseGini)) %>%
     filter(MeanDecreaseGini != 0)
+  
+  # rforest <- readForest(fit$rf.list, x=X[train.id,])
+  # p <- plotInt(x=X[test.id,], y=Y[test.id], int='158_9226476+_570_2809075+', 
+  #              read.forest=rforest,
+  #              xlab='X1', ylab='X2')
   
   return(list(
     significant_features = significant_features,
